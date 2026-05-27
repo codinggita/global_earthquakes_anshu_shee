@@ -1,0 +1,945 @@
+{
+  "info": {
+    "_postman_id": "8f86f7b1-2a1c-4b68-80f0-c24c259868c2",
+    "name": "Earthquake Analytics & Authentication API",
+    "description": "Production-ready Postman collection for verifying the Express/MongoDB Earthquake Analytics API. Includes authentication, CRUD, dynamic querying, advanced aggregations, middleware practicing sandboxes, and admin routes.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Authentication System",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Admin User\",\n  \"email\": \"admin@example.com\",\n  \"password\": \"SecurePassword123\",\n  \"role\": \"admin\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Login User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data.accessToken) {",
+                  "    pm.environment.set(\"accessToken\", response.data.accessToken);",
+                  "    pm.environment.set(\"refreshToken\", response.data.refreshToken);",
+                  "    console.log(\"Tokens successfully saved to environment!\");",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"SecurePassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Authenticated Profile",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "profile"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update User Name",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Admin Coordinator\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "profile"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Request Password Reset OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/forgot-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "forgot-password"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Refresh Session Tokens",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/jwt/refresh-token",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "jwt",
+                "refresh-token"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Logout Session",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Basic CRUD",
+      "item": [
+        {
+          "name": "Fetch All Earthquakes (Paginated & Sorted)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/earthquakes?page=1&limit=10&sort=magnitude-desc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "earthquakes"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "sort",
+                  "value": "magnitude-desc"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add New Earthquake",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"custom_event_999\",\n  \"time\": \"2026-05-28T02:00:00.000Z\",\n  \"latitude\": \"35.6762\",\n  \"longitude\": \"139.6503\",\n  \"depth\": \"50.0\",\n  \"mag\": \"6.8\",\n  \"magType\": \"mw\",\n  \"net\": \"us\",\n  \"updated\": \"2026-05-28T02:30:00.000Z\",\n  \"place\": \"10km E of Tokyo, Japan\",\n  \"status\": \"reviewed\",\n  \"locationSource\": \"us\",\n  \"magSource\": \"us\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/earthquakes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "earthquakes"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Fetch Earthquake using ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/earthquakes/custom_event_999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "earthquakes",
+                "custom_event_999"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update specific fields (PATCH)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mag\": \"7.1\",\n  \"place\": \"12km E of Tokyo, Japan (Revised)\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/earthquakes/custom_event_999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "earthquakes",
+                "custom_event_999"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Replace complete record (PUT)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"time\": \"2026-05-28T02:00:00.000Z\",\n  \"latitude\": \"35.7000\",\n  \"longitude\": \"139.7000\",\n  \"depth\": \"45.0\",\n  \"mag\": \"7.2\",\n  \"magType\": \"mw\",\n  \"net\": \"us\",\n  \"updated\": \"2026-05-28T02:45:00.000Z\",\n  \"place\": \"Central Tokyo, Japan\",\n  \"status\": \"reviewed\",\n  \"locationSource\": \"us\",\n  \"magSource\": \"us\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/earthquakes/custom_event_999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "earthquakes",
+                "custom_event_999"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete record safely (Soft Delete)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/earthquakes/custom_event_999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "earthquakes",
+                "custom_event_999"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Check existence",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/earthquakes/exists/custom_event_999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "earthquakes",
+                "exists",
+                "custom_event_999"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Advanced Querying",
+      "item": [
+        {
+          "name": "Filter by Country",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/earthquakes?country=Japan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "earthquakes"
+              ],
+              "query": [
+                {
+                  "key": "country",
+                  "value": "Japan"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filter by Magnitudes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/earthquakes?minMagnitude=5.0&maxMagnitude=7.0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "earthquakes"
+              ],
+              "query": [
+                {
+                  "key": "minMagnitude",
+                  "value": "5.0"
+                },
+                {
+                  "key": "maxMagnitude",
+                  "value": "7.0"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filter by Depth ranges",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/earthquakes?minDepth=50&maxDepth=300",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "earthquakes"
+              ],
+              "query": [
+                {
+                  "key": "minDepth",
+                  "value": "50"
+                },
+                {
+                  "key": "maxDepth",
+                  "value": "300"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filter by Year and Month",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/earthquakes?year=2015&month=12",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "earthquakes"
+              ],
+              "query": [
+                {
+                  "key": "year",
+                  "value": "2015"
+                },
+                {
+                  "key": "month",
+                  "value": "12"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Keyword Search (Regex)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/search/earthquakes?q=indonesia",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "search",
+                "earthquakes"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "indonesia"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Aggregation & Statistics",
+      "item": [
+        {
+          "name": "Highest Magnitude Analytics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/earthquakes/highest-magnitude",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analytics",
+                "earthquakes",
+                "highest-magnitude"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Deepest Analytics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/earthquakes/deepest",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analytics",
+                "earthquakes",
+                "deepest"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Country wise Distribution",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/earthquakes/country-analysis",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analytics",
+                "earthquakes",
+                "country-analysis"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Magnitude buckets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/earthquakes/magnitude-analysis",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analytics",
+                "earthquakes",
+                "magnitude-analysis"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Monthly count trends",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/earthquakes/monthly-analysis",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analytics",
+                "earthquakes",
+                "monthly-analysis"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Total record count",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/stats/earthquakes/count",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "stats",
+                "earthquakes",
+                "count"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Average Depth Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/stats/earthquakes/average-depth",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "stats",
+                "earthquakes",
+                "average-depth"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Practice Middlewares",
+      "item": [
+        {
+          "name": "Uptime Uptime Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/system/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "system",
+                "health"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Logger practice",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/middleware/logger",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "middleware",
+                "logger"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Global error handling practice",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/middleware/error-handler",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "middleware",
+                "error-handler"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Rate limit verification",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/middleware/rate-limit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "middleware",
+                "rate-limit"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Caching Practice",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/middleware/cache",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "middleware",
+                "cache"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Admin & Bulk Routes",
+      "item": [
+        {
+          "name": "Admin Earthquakes list",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/earthquakes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "earthquakes"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Bulk Create records",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"records\": [\n    {\n      \"id\": \"bulk_event_1\",\n      \"time\": \"2026-05-28T02:00:00.000Z\",\n      \"latitude\": \"10.0\",\n      \"longitude\": \"100.0\",\n      \"depth\": \"10.0\",\n      \"mag\": \"4.5\",\n      \"magType\": \"mb\",\n      \"net\": \"us\",\n      \"updated\": \"2026-05-28T02:00:00.000Z\",\n      \"place\": \"Sumatra, Indonesia\",\n      \"status\": \"automatic\",\n      \"locationSource\": \"us\",\n      \"magSource\": \"us\"\n    },\n    {\n      \"id\": \"bulk_event_2\",\n      \"time\": \"2026-05-28T03:00:00.000Z\",\n      \"latitude\": \"12.0\",\n      \"longitude\": \"101.0\",\n      \"depth\": \"15.0\",\n      \"mag\": \"5.1\",\n      \"magType\": \"mb\",\n      \"net\": \"us\",\n      \"updated\": \"2026-05-28T03:00:00.000Z\",\n      \"place\": \"Gulf of Thailand\",\n      \"status\": \"reviewed\",\n      \"locationSource\": \"us\",\n      \"magSource\": \"us\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/earthquakes/bulk-create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "earthquakes",
+                "bulk-create"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Bulk Update records",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"updates\": [\n    {\n      \"id\": \"bulk_event_1\",\n      \"mag\": \"4.8\",\n      \"status\": \"reviewed\"\n    },\n    {\n      \"id\": \"bulk_event_2\",\n      \"mag\": \"5.3\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/earthquakes/bulk-update",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "earthquakes",
+                "bulk-update"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Bulk Delete records (Soft Delete)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ids\": [\"bulk_event_1\", \"bulk_event_2\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/earthquakes/bulk-delete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "earthquakes",
+                "bulk-delete"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
